@@ -1,4 +1,9 @@
 {
   "name": "go-eventops-platform",
-  "packageManager": "yarn@4.14.1"
+  "version": "0.1.0",
+  "author": {
+    "name": "Thinura Kumarasinghe",
+    "email": "thinuralaksara@gmail.com"
+  },
+  "packageManager": "yarn@4.15.0"
 }
