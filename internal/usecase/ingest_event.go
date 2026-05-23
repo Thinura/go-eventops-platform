@@ -9,7 +9,9 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/Thinura/go-eventops-platform/internal/apperror"
 	"github.com/Thinura/go-eventops-platform/internal/domain"
+	"github.com/Thinura/go-eventops-platform/internal/port"
 )
 
 type IngestEventInput struct {
@@ -25,15 +27,17 @@ type IngestEventOutput struct {
 	Status string
 }
 
-type IngestEventUseCase struct{}
+type IngestEventUseCase struct {
+	publisher port.EventPublisher
+}
 
-func NewIngestEventUseCase() *IngestEventUseCase {
-	return &IngestEventUseCase{}
+func NewIngestEventUseCase(publisher port.EventPublisher) *IngestEventUseCase {
+	return &IngestEventUseCase{
+		publisher: publisher,
+	}
 }
 
 func (uc *IngestEventUseCase) Execute(ctx context.Context, input IngestEventInput) (*IngestEventOutput, error) {
-	_ = ctx
-
 	event := domain.Event{
 		ID:             uuid.NewString(),
 		Source:         input.Source,
@@ -47,6 +51,14 @@ func (uc *IngestEventUseCase) Execute(ctx context.Context, input IngestEventInpu
 
 	if err := event.Validate(); err != nil {
 		return nil, err
+	}
+
+	if err := uc.publisher.Publish(ctx, event); err != nil {
+		return nil, apperror.Wrap(
+			apperror.CodeEventPublishFailed,
+			"failed to publish event",
+			err,
+		)
 	}
 
 	return &IngestEventOutput{

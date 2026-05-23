@@ -7,13 +7,19 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Thinura/go-eventops-platform/internal/infrastructure/memory"
 	"github.com/Thinura/go-eventops-platform/internal/usecase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+func newTestHandler() *Handler {
+	publisher := memory.NewEventPublisher()
+	return NewHandler(usecase.NewIngestEventUseCase(publisher))
+}
+
 func TestHandler_Create_ValidRequest(t *testing.T) {
-	handler := NewHandler(usecase.NewIngestEventUseCase())
+	handler := newTestHandler()
 
 	body := `{
 		"source": "payment-service",
@@ -46,7 +52,7 @@ func TestHandler_Create_ValidRequest(t *testing.T) {
 }
 
 func TestHandler_Create_InvalidJSON(t *testing.T) {
-	handler := NewHandler(usecase.NewIngestEventUseCase())
+	handler := newTestHandler()
 
 	body := `{"source": "payment-service",`
 
@@ -61,7 +67,7 @@ func TestHandler_Create_InvalidJSON(t *testing.T) {
 }
 
 func TestHandler_Create_UnsupportedEventType(t *testing.T) {
-	handler := NewHandler(usecase.NewIngestEventUseCase())
+	handler := newTestHandler()
 
 	body := `{
 		"source": "payment-service",
@@ -92,7 +98,7 @@ func TestHandler_Create_UnsupportedEventType(t *testing.T) {
 }
 
 func TestHandler_Create_MissingSource(t *testing.T) {
-	handler := NewHandler(usecase.NewIngestEventUseCase())
+	handler := newTestHandler()
 
 	body := `{
 		"event_type": "payment.failed",
@@ -122,7 +128,7 @@ func TestHandler_Create_MissingSource(t *testing.T) {
 }
 
 func TestHandler_Create_MissingEventType(t *testing.T) {
-	handler := NewHandler(usecase.NewIngestEventUseCase())
+	handler := newTestHandler()
 
 	body := `{
 		"source": "payment-service",
@@ -152,7 +158,7 @@ func TestHandler_Create_MissingEventType(t *testing.T) {
 }
 
 func TestHandler_Create_MissingEntityID(t *testing.T) {
-	handler := NewHandler(usecase.NewIngestEventUseCase())
+	handler := newTestHandler()
 
 	body := `{
 		"source": "payment-service",
@@ -182,7 +188,7 @@ func TestHandler_Create_MissingEntityID(t *testing.T) {
 }
 
 func TestHandler_Create_MissingOccurredAt(t *testing.T) {
-	handler := NewHandler(usecase.NewIngestEventUseCase())
+	handler := newTestHandler()
 
 	body := `{
 		"source": "payment-service",
@@ -212,7 +218,7 @@ func TestHandler_Create_MissingOccurredAt(t *testing.T) {
 }
 
 func TestHandler_Create_UnknownJSONField(t *testing.T) {
-	handler := NewHandler(usecase.NewIngestEventUseCase())
+	handler := newTestHandler()
 
 	body := `{
 		"source": "payment-service",

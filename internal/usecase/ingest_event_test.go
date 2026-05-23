@@ -6,12 +6,14 @@ import (
 	"time"
 
 	"github.com/Thinura/go-eventops-platform/internal/apperror"
+	"github.com/Thinura/go-eventops-platform/internal/infrastructure/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIngestEventUseCase_Execute(t *testing.T) {
-	uc := NewIngestEventUseCase()
+	publisher := memory.NewEventPublisher()
+	uc := NewIngestEventUseCase(publisher)
 
 	input := IngestEventInput{
 		Source:     "payment-service",
@@ -26,10 +28,18 @@ func TestIngestEventUseCase_Execute(t *testing.T) {
 	require.NotNil(t, output)
 	assert.NotEmpty(t, output.ID)
 	assert.Equal(t, "accepted", output.Status)
+
+	publishedEvents := publisher.Events()
+	require.Len(t, publishedEvents, 1)
+	assert.Equal(t, output.ID, publishedEvents[0].ID)
+	assert.Equal(t, input.Source, publishedEvents[0].Source)
+	assert.Equal(t, input.EventType, string(publishedEvents[0].EventType))
+	assert.Equal(t, input.EntityID, publishedEvents[0].EntityID)
 }
 
 func TestIngestEventUseCase_Execute_InvalidInput(t *testing.T) {
-	uc := NewIngestEventUseCase()
+	publisher := memory.NewEventPublisher()
+	uc := NewIngestEventUseCase(publisher)
 
 	input := IngestEventInput{
 		Source:     "",
