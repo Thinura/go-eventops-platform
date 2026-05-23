@@ -1,9 +1,9 @@
 package event
 
 import (
+	"github.com/Thinura/go-eventops-platform/internal/usecase"
 	"github.com/go-chi/chi/v5"
 	"net/http"
-	"github.com/Thinura/go-eventops-platform/internal/usecase"
 )
 
 func Routes() http.Handler {
@@ -13,6 +13,6 @@ func Routes() http.Handler {
 	handler := NewHandler(ingestEventUseCase)
 
 	router.Post("/", handler.Create)
-	
+
 	return router
 }

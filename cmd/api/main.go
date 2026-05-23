@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,15 +11,25 @@ import (
 
 	"github.com/Thinura/go-eventops-platform/internal/config"
 	httptransport "github.com/Thinura/go-eventops-platform/internal/transport/http"
+	"github.com/Thinura/go-eventops-platform/internal/infrastructure/logger"
 )
 
 func main() {
 	cfg := config.Load()
 
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: cfg.LogLevel}))
-	slog.SetDefault(logger)
+	applogger := logger.New(logger.Config{
+		Enabled: cfg.AppLogging,
+		Level:   cfg.LogLevel,
+		Format:  cfg.LogFormat,
+	})
+	logger.SetDefault(applogger)
 
-	router := httptransport.NewRouter()
+	router := httptransport.NewRouter(
+		httptransport.RouterConfig{
+		AppLogging: cfg.AppLogging,
+		},
+	)
+
 	server := &http.Server{
 		Addr:         ":" + cfg.HTTPPort,
 		Handler:      router,
@@ -32,7 +41,7 @@ func main() {
 	serverErrors := make(chan error, 1)
 
 	go func() {
-		slog.Info("starting api server", "port", cfg.HTTPPort)
+		logger.Info("starting api server", "port", cfg.HTTPPort)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErrors <- err
 		}
@@ -43,16 +52,16 @@ func main() {
 
 	select {
 	case err := <-serverErrors:
-		slog.Error("server error", "error", err)
+		logger.Error("server error", "error", err)
 		os.Exit(1)
 	case sig := <-shutdown:
-		slog.Info("shutdown signal received", "signal", sig)
+		logger.Info("shutdown signal received", "signal", sig)
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := server.Shutdown(ctx); err != nil {
-			slog.Error("server shutdown error", "error", err)
+			logger.Error("server shutdown error", "error", err)
 			os.Exit(1)
 		}
-		slog.Info("server gracefully stopped")
+		logger.Info("server gracefully stopped")
 	}
 }

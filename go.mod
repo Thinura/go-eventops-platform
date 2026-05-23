@@ -2,10 +2,9 @@ module github.com/Thinura/go-eventops-platform
 
 go 1.25.0
 
-require (
-	github.com/air-verse/air v1.65.3
-	github.com/go-chi/chi/v5 v5.2.5
-)
+require github.com/go-chi/chi/v5 v5.2.5
+
+require github.com/air-verse/air v1.65.3 // indirect
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
@@ -29,3 +28,5 @@ require (
 	golang.org/x/text v0.28.0 // indirect
 	google.golang.org/protobuf v1.36.8 // indirect
 )
+
+tool github.com/air-verse/air

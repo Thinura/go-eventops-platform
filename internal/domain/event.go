@@ -1,10 +1,10 @@
 package domain
 
 import (
-	"errors"
-	"fmt"
 	"strings"
 	"time"
+
+	"github.com/Thinura/go-eventops-platform/internal/apperror"
 )
 
 type EventType string
@@ -31,33 +31,25 @@ type Event struct {
 	IdempotencyKey string
 }
 
-var (
-	ErrEventSourceRequired    = errors.New("event source is required")
-	ErrEventTypeRequired      = errors.New("event type is required")
-	ErrEventEntityIDRequired  = errors.New("event entity_id is required")
-	ErrEventOccurredAtMissing = errors.New("event occurred_at is required")
-	ErrUnsupportedEventType   = errors.New("unsupported event type")
-)
-
 func (e Event) Validate() error {
 	if strings.TrimSpace(e.Source) == "" {
-		return ErrEventSourceRequired
+		return apperror.Validation(apperror.CodeEventSourceRequired, "source is required")
 	}
 
 	if strings.TrimSpace(string(e.EventType)) == "" {
-		return ErrEventTypeRequired
+		return apperror.Validation(apperror.CodeEventTypeRequired, "event_type is required")
 	}
 
 	if !IsSupportedEventType(e.EventType) {
-		return fmt.Errorf("%w: %s", ErrUnsupportedEventType, e.EventType)
+		return apperror.Validation(apperror.CodeUnsupportedEventType, "unsupported event_type")
 	}
 
 	if strings.TrimSpace(e.EntityID) == "" {
-		return ErrEventEntityIDRequired
+		return apperror.Validation(apperror.CodeEventEntityIDRequired, "entity_id is required")
 	}
 
 	if e.OccurredAt.IsZero() {
-		return ErrEventOccurredAtMissing
+		return apperror.Validation(apperror.CodeEventOccurredAtMissing, "occurred_at is required")
 	}
 
 	return nil

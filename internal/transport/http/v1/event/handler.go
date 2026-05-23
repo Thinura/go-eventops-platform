@@ -2,11 +2,12 @@ package event
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"time"
 
-	"github.com/Thinura/go-eventops-platform/internal/domain"
+		"github.com/Thinura/go-eventops-platform/internal/infrastructure/logger"
+
+	"github.com/Thinura/go-eventops-platform/internal/apperror"
 	"github.com/Thinura/go-eventops-platform/internal/transport/http/response"
 	"github.com/Thinura/go-eventops-platform/internal/usecase"
 )
@@ -41,10 +42,14 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(&request); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+		response.AppError(w, apperror.New(
+			apperror.CodeInvalidRequestBody,
+			"invalid request body",
+		))
 		return
 	}
 
+	logger.DebugJSON("Creating event", "payload", request)
 	output, err := h.ingestEventUseCase.Execute(r.Context(), usecase.IngestEventInput{
 		Source:     request.Source,
 		EventType:  request.EventType,
@@ -53,7 +58,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		OccurredAt: request.OccurredAt,
 	})
 	if err != nil {
-		writeCreateEventError(w, err)
+		response.AppError(w, err)
 		return
 	}
 
@@ -61,21 +66,4 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		ID:     output.ID,
 		Status: output.Status,
 	})
-}
-
-func writeCreateEventError(w http.ResponseWriter, err error) {
-	switch {
-	case errors.Is(err, domain.ErrEventSourceRequired):
-		response.Error(w, http.StatusBadRequest, "source is required")
-	case errors.Is(err, domain.ErrEventTypeRequired):
-		response.Error(w, http.StatusBadRequest, "event_type is required")
-	case errors.Is(err, domain.ErrUnsupportedEventType):
-		response.Error(w, http.StatusBadRequest, "unsupported event_type")
-	case errors.Is(err, domain.ErrEventEntityIDRequired):
-		response.Error(w, http.StatusBadRequest, "entity_id is required")
-	case errors.Is(err, domain.ErrEventOccurredAtMissing):
-		response.Error(w, http.StatusBadRequest, "occurred_at is required")
-	default:
-		response.Error(w, http.StatusInternalServerError, "failed to create event")
-	}
 }
