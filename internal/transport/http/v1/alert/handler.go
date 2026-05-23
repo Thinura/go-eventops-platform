@@ -1,0 +1,16 @@
+package alert
+
+import (
+	response "github.com/Thinura/go-eventops-platform/internal/transport/http/response"
+	"net/http"
+)
+
+func alertHandler(w http.ResponseWriter, r *http.Request) {
+
+	response.JSON(w, http.StatusOK, map[string]string{
+		"status":  "ok",
+		"service": "eventops-api",
+		"version": "v1",
+	})
+
+}

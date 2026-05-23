@@ -1,5 +1,7 @@
 {
   "name": "go-eventops-platform",
+  "applicationName": "EventOps",
+  "description": "EventOps is a backend platform that receives events from different systems, processes them in the background, stores them, creates alerts when rules match, and exposes APIs to view events, alerts, and processing status.",
   "version": "0.1.0",
   "author": {
     "name": "Thinura Kumarasinghe",

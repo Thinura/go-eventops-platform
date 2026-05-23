@@ -1,4 +1,4 @@
-package http
+package response
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func WriteJSON(w http.ResponseWriter, statusCode int, payload any) {
+func JSON(w http.ResponseWriter, statusCode int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 
@@ -19,6 +19,6 @@ func WriteJSON(w http.ResponseWriter, statusCode int, payload any) {
 	}
 }
 
-func WriteError(w http.ResponseWriter, statusCode int, message string) {
-	WriteJSON(w, statusCode, ErrorResponse{Error: message})
+func Error(w http.ResponseWriter, statusCode int, message string) {
+	JSON(w, statusCode, ErrorResponse{Error: message})
 }
