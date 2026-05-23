@@ -13,7 +13,29 @@ run-api:
 
 .PHONY: test
 test:
-	go test ./...
+	go tool gotestsum -- ./...
+
+.PHONY: test-verbose
+test-verbose:
+	go tool gotestsum --format testname -- ./... -v
+
+.PHONY: test-cover
+test-cover:
+	go tool gotestsum -- ./... -cover
+
+.PHONY: test-cover-profile
+test-cover-profile:
+	go test ./... -coverprofile=coverage.out
+
+.PHONY: test-cover-html
+test-cover-html:
+	go test ./... -coverprofile=coverage.out
+	go tool cover -html=coverage.out
+
+.PHONY: test-cover-func
+test-cover-func:
+	go test ./... -coverprofile=coverage.out
+	go tool cover -func=coverage.out
 
 .PHONY: fmt
 fmt:
@@ -21,4 +43,4 @@ fmt:
 
 .PHONY: tidy
 tidy:
-	go mod tidy 
+	go mod tidy
