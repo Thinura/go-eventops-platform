@@ -17,12 +17,14 @@ import (
 func main() {
 	cfg := config.Load()
 
-	applogger := logger.New(logger.Config{
+	if err := logger.Init(logger.Config{
 		Enabled: cfg.AppLogging,
 		Level:   cfg.LogLevel,
 		Format:  cfg.LogFormat,
-	})
-	logger.SetDefault(applogger)
+	}); err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
 
 	router := httptransport.NewRouter(
 		httptransport.RouterConfig{

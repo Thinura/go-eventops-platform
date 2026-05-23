@@ -1,11 +1,13 @@
 package logger
 
 import (
-	"io"
-	"log/slog"
-	"os"
 	"strings"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
+
+var log *zap.SugaredLogger = zap.NewNop().Sugar()
 
 type Config struct {
 	Enabled bool
@@ -13,49 +15,56 @@ type Config struct {
 	Format  string
 }
 
-func New(cfg Config) *slog.Logger {
-	var output io.Writer = os.Stdout
-
+func Init(cfg Config) error {
 	if !cfg.Enabled {
-		output = io.Discard
+		log = zap.NewNop().Sugar()
+		return nil
 	}
 
-	level := parseLevel(cfg.Level)
-	var handler slog.Handler
+	zapConfig := zap.NewProductionConfig()
+	zapConfig.Level = zap.NewAtomicLevelAt(parseLevel(cfg.Level))
+	zapConfig.OutputPaths = []string{"stdout"}
+	zapConfig.ErrorOutputPaths = []string{"stderr"}
 
-	switch cfg.Format {
-	case "json":
-		handler = slog.NewJSONHandler(output, &slog.HandlerOptions{
-			Level: level,
-		})
+	switch strings.ToLower(strings.TrimSpace(cfg.Format)) {
+	case "console", "text":
+		zapConfig.Encoding = "console"
+		zapConfig.EncoderConfig = zap.NewDevelopmentEncoderConfig()
+		zapConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		zapConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	default:
-		handler = slog.NewTextHandler(output, &slog.HandlerOptions{
-			Level: level,
-		})
+		zapConfig.Encoding = "json"
+		zapConfig.EncoderConfig = zap.NewProductionEncoderConfig()
+		zapConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	}
 
-	return slog.New(handler)
+	logger, err := zapConfig.Build()
+	if err != nil {
+		return err
+	}
+
+	log = logger.Sugar()
+
+	return nil
 }
 
-func SetDefault(l *slog.Logger) {
-	slog.SetDefault(l)
+func Sync() {
+	if log == nil {
+		return
+	}
+
+	_ = log.Sync()
 }
 
-
-
-func parseLevel(level string) slog.Level {
-
+func parseLevel(level string) zapcore.Level {
 	switch strings.ToLower(strings.TrimSpace(level)) {
 	case "debug":
-		return slog.LevelDebug
-	case "info":
-		return slog.LevelInfo
+		return zapcore.DebugLevel
 	case "warn", "warning":
-		return slog.LevelWarn
+		return zapcore.WarnLevel
 	case "error":
-		return slog.LevelError
+		return zapcore.ErrorLevel
 	default:
-		return slog.LevelInfo
+		return zapcore.InfoLevel
 	}
-
 }
